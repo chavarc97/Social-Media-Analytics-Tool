@@ -5,3 +5,6 @@ requests
 cassandra-driver
 time_uuid
 tabulate
+pydgraph
+pandas
+
