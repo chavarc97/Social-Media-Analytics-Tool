@@ -208,7 +208,7 @@ trend_schema = """
     start_date: dateTime .
 """
 
-patter_schema = """
+pattern_schema = """
     type Pattern {
         pattern_id
         user
