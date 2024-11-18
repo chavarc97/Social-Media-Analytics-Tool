@@ -1,0 +1,6 @@
+analytics_id,user,metric_type,value,timestamp
+an1,u1,engagement,0.82,2024-01-15T00:00:00
+an2,u2,retention,0.95,2024-01-15T00:00:00
+an3,u3,influence,0.88,2024-01-15T00:00:00
+an4,u4,activity,0.76,2024-01-15T00:00:00
+an5,u5,growth,0.85,2024-01-15T00:00:00

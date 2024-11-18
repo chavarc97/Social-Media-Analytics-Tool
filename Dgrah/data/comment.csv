@@ -1,0 +1,6 @@
+comment_id,content,created_at,likes_count,liked_by,author,post,lifecycle,sentiment_score
+c1,"Amazing work!",2024-01-10T09:00:00,12,"u2,u3,u4",u2,p1,cont2,0.8
+c2,"Great project",2024-01-10T09:30:00,23,"u1,u3,u5",u3,p1,cont5,0.9
+c3,"Beautiful art",2024-01-11T14:00:00,15,"u1,u2,u4",u4,p2,cont7,0.7
+c4,"Can't wait",2024-01-12T11:45:00,34,"u2,u3,u5",u1,p3,cont9,0.85
+c5,"Exciting!",2024-01-13T16:30:00,19,"u1,u3,u4",u5,p4,cont10,0.75

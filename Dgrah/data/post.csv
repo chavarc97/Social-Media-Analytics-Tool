@@ -1,0 +1,6 @@
+post_id,content,created_at,likes_count,shares_count,hashtags,author,comments,community,is_archived,lifecycle
+p1,"Just launched my new project! #tech #coding",2024-01-10T08:30:00,45,12,"h1,h2",u1,"c1,c2","com1,com3",false,cont1
+p2,"Check out my latest artwork #digital #art",2024-01-11T13:15:00,89,34,"h3,h4",u2,"c3","com2",false,cont3
+p3,"New tutorial series coming soon! #programming",2024-01-12T11:20:00,156,67,"h2,h5",u3,"c4","com3",false,cont4
+p4,"Photography exhibition next week #photo",2024-01-13T15:45:00,78,23,"h4,h6",u4,"c5","com4",false,cont6
+p5,"Best restaurant finds of 2024 #food",2024-01-14T12:10:00,92,45,"h7",u5,,"com5",false,cont8

@@ -1,0 +1,6 @@
+trend_id,name,followers,score,start_date
+t1,#tech,"u1,u3",89.5,2024-01-01T00:00:00
+t2,#digitalart,"u2,u4",85.3,2024-01-02T00:00:00
+t3,#programming,"u1,u3",92.8,2024-01-03T00:00:00
+t4,#photography,"u2,u4",87.2,2024-01-04T00:00:00
+t5,#foodie,"u5",84.6,2024-01-05T00:00:00

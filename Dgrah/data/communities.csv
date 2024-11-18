@@ -1,0 +1,6 @@
+community_id,name,description,created_at,members,posts,admins,patterns,health_score
+com1,TechTalks,"A community for technology discussions",2024-01-01T00:00:00,"u1,u3","p1","u2","pat1,pat3",0.92
+com2,DigitalArtists,"For digital art creators and enthusiasts",2024-01-02T00:00:00,"u2,u4","p2","u2","pat2",0.88
+com3,CodeCrafters,"Programming and software development",2024-01-03T00:00:00,"u1,u3","p1,p3","u3","pat3",0.95
+com4,PhotoPassion,"Photography enthusiasts unite",2024-01-04T00:00:00,"u4","p4","u4","pat4",0.86
+com5,FoodieFinds,"Discovering and sharing great food",2024-01-05T00:00:00,"u5","p5","u5","pat5",0.90

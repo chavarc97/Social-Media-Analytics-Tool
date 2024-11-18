@@ -1,0 +1,6 @@
+score_id,user,score_value,computed_at,factors
+i1,u1,75.5,2024-01-15T00:00:00,"engagement,activity,post_quality"
+i2,u2,88.3,2024-01-15T00:00:00,"content,followers,community_impact"
+i3,u3,92.7,2024-01-15T00:00:00,"expertise,engagement,tutorial_quality"
+i4,u4,82.1,2024-01-15T00:00:00,"content,activity,artistic_value"
+i5,u5,79.4,2024-01-15T00:00:00,"engagement,followers,review_quality"

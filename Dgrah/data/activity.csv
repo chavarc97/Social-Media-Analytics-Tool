@@ -1,0 +1,6 @@
+activity_id,type,timestamp,user,duration,community
+a1,post,2024-01-10T08:30:00,u1,5.5,com1
+a2,comment,2024-01-11T13:15:00,u2,2.3,com2
+a3,share,2024-01-12T11:20:00,u3,1.8,com3
+a4,like,2024-01-13T15:45:00,u4,0.5,com4
+a5,post,2024-01-14T12:10:00,u5,4.2,com5

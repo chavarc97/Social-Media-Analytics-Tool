@@ -1,0 +1,6 @@
+pattern_id,user,community,type,frequency,last_seen
+pat1,u1,com1,daily_post,0.85,2024-01-15T00:00:00
+pat2,u2,com2,weekly_share,0.92,2024-01-15T00:00:00
+pat3,u3,com3,tutorial_series,0.78,2024-01-15T00:00:00
+pat4,u4,com4,photo_upload,0.88,2024-01-15T00:00:00
+pat5,u5,com5,review_post,0.82,2024-01-15T00:00:00

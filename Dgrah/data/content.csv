@@ -1,0 +1,11 @@
+content_id,type,created_at,engagement_rate,lifecycle_stage,related_posts,related_comments,related_users,related_communities
+cont1,post,2024-01-10T08:30:00,0.89,viral,p1,,"u1","com1,com3"
+cont2,comment,2024-01-10T09:00:00,0.76,active,,c1,"u2","com1"
+cont3,post,2024-01-11T13:15:00,0.92,trending,p2,,"u2","com2"
+cont4,post,2024-01-12T11:20:00,0.85,rising,p3,,"u3","com3"
+cont5,comment,2024-01-12T12:00:00,0.78,active,,c2,"u3","com1"
+cont6,post,2024-01-13T15:45:00,0.91,trending,p4,,"u4","com4"
+cont7,comment,2024-01-13T16:00:00,0.82,active,,c3,"u4","com2"
+cont8,post,2024-01-14T12:10:00,0.88,active,p5,,"u5","com5"
+cont9,comment,2024-01-13T16:30:00,0.75,archived,,c4,"u1","com3"
+cont10,comment,2024-01-14T12:30:00,0.79,active,,c5,"u5","com4"
