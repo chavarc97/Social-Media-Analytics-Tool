@@ -1,6 +1,6 @@
-user_id,username,email,bio,joinDate,isAdmin,followerCount,isActive,follower_count,following_count,follows,followers,trends,communities
-u1,johndoe,john@example.com,"Tech enthusiast and coffee lover",2024-01-01T10:00:00,false,120,true,120,45,"u2,u3","u4,u5","t1,t3","com1,com3"
-u2,janesmith,jane@example.com,"Digital artist and gamer",2024-01-02T11:30:00,true,350,true,350,89,"u1,u3,u4","u1,u3,u5","t2,t4","com2"
-u3,techguru,guru@example.com,"Software developer and mentor",2024-01-03T09:15:00,false,890,true,890,102,"u2,u4","u1,u2,u4,u5","t1,t3","com1,com3"
-u4,artlover,art@example.com,"Photography and design",2024-01-04T14:20:00,false,230,true,230,167,"u2,u3,u5","u3,u5","t2,t4","com2,com4"
-u5,foodie,food@example.com,"Exploring world cuisines",2024-01-05T16:45:00,false,445,true,445,78,"u1,u4","u1,u2,u3","t5","com5"
+user_id,username,email,bio,joinDate,isAdmin,followerCount,isActive,following_count,follows,followers,trends,communities
+u1,johndoe,john@example.com,"Tech enthusiast and coffee lover",2024-01-01T10:00:00,false,120,true,45,"u2,u3","u4,u5","t1,t3","com1,com3"
+u2,janesmith,jane@example.com,"Digital artist and gamer",2024-01-02T11:30:00,true,350,true,89,"u1,u3,u4","u1,u3,u5","t2,t4","com2"
+u3,techguru,guru@example.com,"Software developer and mentor",2024-01-03T09:15:00,false,890,true,102,"u2,u4","u1,u2,u4,u5","t1,t3","com1,com3"
+u4,artlover,art@example.com,"Photography and design",2024-01-04T14:20:00,false,230,true,167,"u2,u3,u5","u3,u5","t2,t4","com2,com4"
+u5,foodie,food@example.com,"Exploring world cuisines",2024-01-05T16:45:00,false,445,true,78,"u1,u4","u1,u2,u3","t5","com5"
