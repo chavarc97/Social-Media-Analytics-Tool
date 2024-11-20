@@ -9,7 +9,7 @@ def create_schema(client):
     
 def create_data(client):
     data = data_parser.CSV_Parser(client=client)
-    data.load_data()
+    data.load_data("data")
 
 
 def drop_all(client):
