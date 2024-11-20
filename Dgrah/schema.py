@@ -225,3 +225,22 @@ pattern_schema = """
     frequency: float .
     last_seen: dateTime .
 """
+
+hashtags_schema = """
+    type Hashtag {
+        hashtag_id
+        name
+        posts
+        comments
+        usage_count
+        trending_score
+    }
+    
+    hashtag_id: string @id .
+    name: string @index(exact) .
+    posts: [Post] @reverse .
+    comments: [Comment] @reverse .
+    usage_count: int .
+    trending_score: float .
+    
+"""

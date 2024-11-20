@@ -171,6 +171,7 @@ class CSV_Parser:
                     "dgraph.type": "Comment",
                     "comment_id": row["comment_id"],
                     "content": row["content"],
+                    "hashtag": row["hashtag"],
                     "created_at": row["created_at"],
                     "likes_count": int(row["likes_count"]),
                     "liked_by": [].append(row["liked_by"].split(",")),
@@ -190,6 +191,30 @@ class CSV_Parser:
             self.logger.warning(f"Failed to load {len(df) - len(uid_map)} comments")
         else:
             self.logger.info(f"Successfully loaded {len(uid_map)} comments")
+            
+            
+    def _load_hashtags(self, file_path: str) -> Dict:
+        """Load hashtags into the graph"""
+        df = pd.read_csv(file_path)
+        uid_map = {}
+        self.logger.info(f"Loading {len(df)} hashtags from {file_path}")
+        try:
+            for _, row in df.iterrows():
+                hashtag_data = {
+                    "dgraph.type": "Hashtag",
+                    "hashtag_id": row["hashtag_id"],
+                    "name": row["name"],
+                    "posts": [].append(row["posts"].split(",")),
+                    "comments": [].append(row["comments"].split(",")),
+                    "users": [].append(row["users"].split(",")),
+                    "communities": [].append(row["communities"].split(","))
+                }
+                assigned = self._create_mutation(hashtag_data)
+                uid_map[row["hashtag_id"]] = assigned
+                self.logger.info(f"Hashtag {row['hashtag_id']} loaded")
+        except Exception as e:
+            self.logger.error(f"Error loading hashtag: {str(e)}")
+            raise
             
     # Load Communities
     def _load_communities(self, file_path: str) -> Dict:

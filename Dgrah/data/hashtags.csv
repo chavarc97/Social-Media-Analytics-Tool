@@ -1,8 +1,8 @@
-hashtag_id,name,posts
-h1,tech,"p1"
-h2,coding,"p1,p3"
-h3,digital,"p2"
-h4,art,"p2,p4"
-h5,programming,"p3"
-h6,photo,"p4"
-h7,food,"p5"
+hashtag_id,name,posts,comments,usage_count,trending_score
+h1,tech,"p1",c5,2,0.5
+h2,coding,"p1,p3",c1,3,0.6
+h3,digital,"p2",,1,0.4
+h4,art,"p2,p4",c3,3,0.7
+h5,programming,"p3",c2,2,0.6
+h6,photo,"p4",,1,0.3
+h7,food,"p5",c4,2,0.5
