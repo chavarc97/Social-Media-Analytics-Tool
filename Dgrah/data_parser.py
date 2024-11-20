@@ -46,14 +46,14 @@ class CSV_Parser:
         try: 
             # process base nodes
             self._load_users(f"{data_dir}/users.csv")
-            self._load_posts(f"{data_dir}/posts.csv")
-            self._load_comments(f"{data_dir}/comments.csv")
+            self._load_posts(f"{data_dir}/post.csv")
+            self._load_comments(f"{data_dir}/comment.csv")
             self._load_communities(f"{data_dir}/communities.csv")
             self._load_trends(f"{data_dir}/trends.csv")
             self._load_analytics(f"{data_dir}/analytics.csv")
             self._load_patterns(f"{data_dir}/patterns.csv")
-            self._load_activities(f"{data_dir}/activities.csv")
-            self._load_influences(f"{data_dir}/influences.csv")
+            self._load_activities(f"{data_dir}/activity.csv")
+            self._load_influences(f"{data_dir}/influence.csv")
             self._load_content(f"{data_dir}/content.csv")
             
             pass
