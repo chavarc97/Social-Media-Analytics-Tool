@@ -1,6 +1,23 @@
 user_schema = """
+    username: string @index(exact) .
+    email: string @index(exact) .
+    bio: string .
+    joinDate: dateTime .
+    isAdmin: bool .
+    followerCount: int .
+    influenceScore: [uid] @reverse .
+    isActive: bool .
+    tracked_by: [uid] @reverse .
+    follows: [uid] @reverse .
+    trends: [uid] @reverse .
+    followers: [uid] @reverse .
+    posts: [uid] @reverse .
+    comments: [uid] @reverse .
+    communities: [uid] @reverse .
+    follower_count: int @index(int) .
+    following_count: int @index(int) .
+    
     type User {
-        user_id
         username
         email
         bio
@@ -19,31 +36,10 @@ user_schema = """
         follower_count
         following_count
     }
-    
-    user_id: string @id .
-    username: string @index(exact) .
-    email: string @index(exact) .
-    bio: string .
-    joinDate: dateTime .
-    isAdmin: bool .
-    followerCount: int .
-    influenceScore: [Influence] @reverse .
-    isActive: bool .
-    tracked_by: [Analytics] @reverse .
-    follows: [User] @reverse .
-    trends: [Trend] @reverse .
-    followers: [User] @reverse .
-    posts: [Post] @reverse .
-    comments: [Comment] @reverse .
-    communities: [Community] @reverse .
-    follower_count: int @index(int) .
-    following_count: int @index(int) .
-    
 """
 
 post_schema = """
     type Post {
-        post_id
         content 
         created_at 
         likes_count 
@@ -51,28 +47,26 @@ post_schema = """
         hashtags
         author
         comments
-        community
+        communities
         is_archived
         lifecycle 
     }
     
-    post_id: string @id .
     content: string @index(term, fulltext) .
     created_at: dateTime .
     likes_count: int @index(int) .
     shares_count: int @index(int) .
-    hashtags: [Hashtag] @reverse .
-    comments: [Comment] @reverse .
-    author: User @reverse .
+    hashtags: [uid] @reverse .
+    comments: [uid] @reverse .
+    author: uid @reverse .
     # links to community but not required
-    community: [Community] @reverse(field: posts) .
+    communities: [uid] @reverse .
     is_archived: bool .
-    lifecycle: [Content] @reverse .
+    lifecycle: [uid] @reverse .
 """
 
 comment_schema = """
     type Comment {
-        comment_id
         content
         created_at
         likes_count
@@ -83,20 +77,18 @@ comment_schema = """
         sentiment_score
     }
     
-    comment_id: string @id .
     content: string @index(term, fulltext) .
     created_at: dateTime .
     likes_count: int @index(int) .
-    liked_by: [User] @reverse .
-    author: User @reverse .
-    post: Post @reverse .
-    lifecycle: [Content] @reverse .
-    sentiment_score: float
+    liked_by: [uid] @reverse .
+    author: uid @reverse .
+    post: uid @reverse .
+    lifecycle: [uid] @reverse .
+    sentiment_score: float .
 """
 
 community_schema = """
     type Community {
-        community_id
         name
         description
         created_at
@@ -107,21 +99,19 @@ community_schema = """
         health_score
     }
     
-    community_id: string @id .
     name: string @index(exact) .
     description: string .
     created_at: dateTime .
-    members: [User] @reverse(field: communities) .
-    posts: [Post] @reverse .
-    admins: [User] @reverse .
-    patterns: [Activity] 
-    health_score: float
+    members: [uid] @reverse .
+    posts: [uid] @reverse .
+    admins: [uid] @reverse .
+    patterns: [uid] .
+    health_score: float .
 """
 
 content_schema = """
     type Content {
-        content_id
-        type
+        content_type
         created_at
         engagement_rate
         lifecycle_stage
@@ -131,28 +121,25 @@ content_schema = """
         related_communities    
     }
     
-    content_id: string @id .
-    type: string @index(exact) .
+    content_type: string @index(exact) .
     created_at: dateTime .
     engagement_rate: float .
     lifecycle_stage: string .
-    related_posts: [Post] @reverse .
-    related_comments: [Comment] @reverse .
-    related_users: [User] @reverse .
-    related_communities: [Community] @reverse .
+    related_posts: [uid] @reverse .
+    related_comments: [uid] @reverse .
+    related_users: [uid] @reverse .
+    related_communities: [uid] @reverse .
 """
 
 influence_schema = """
     type Influence {
-        score_id
         user
         score_value
         computed_at
         factors
     }
     
-    score_id: string @id .
-    user: User @reverse .
+    user: uid @reverse .
     score_value: float .
     computed_at: dateTime .
     factors: [string] .
@@ -160,7 +147,6 @@ influence_schema = """
 
 activity_schema = """
     type Activity {
-        activity_id
         type
         timestamp
         user
@@ -168,25 +154,21 @@ activity_schema = """
         community
     }
     
-    activity_id: string @id .
     type: string @index(exact) .
     timestamp: dateTime .
-    user: User @reverse(field: generates) .
+    user: uid @reverse .
     duration: float .
-    community: Community @reverse .
 """
 
 analytics_schema = """
     type Analytics {
-        analytics_id
         user
         metric_type
         value
         timestamp
     }
     
-    analytics_id: string @id .
-    user: User @reverse(field: tracked_by) .
+    user: uid @reverse .
     metric_type: string @index(exact) .
     value: float .
     timestamp: dateTime .
@@ -194,23 +176,20 @@ analytics_schema = """
 
 trend_schema = """
     type Trend {
-        trend_id
         name
         followers
         score
         start_date
     }
     
-    trend_id: string @id .
     name: string @index(exact) .
-    followers: [User] @reverse(field: trends) .
+    followers: [uid] @reverse .
     score: float .
     start_date: dateTime .
 """
 
 pattern_schema = """
     type Pattern {
-        pattern_id
         user
         community
         type
@@ -218,17 +197,15 @@ pattern_schema = """
         last_seen
     }
     
-    pattern_id: string @id .
-    user: User @reverse .
-    community: Community @reverse .
+    user: uid @reverse .
     type: string @index(exact) .
     frequency: float .
     last_seen: dateTime .
+    community: uid @reverse .
 """
 
 hashtags_schema = """
     type Hashtag {
-        hashtag_id
         name
         posts
         comments
@@ -236,10 +213,9 @@ hashtags_schema = """
         trending_score
     }
     
-    hashtag_id: string @id .
     name: string @index(exact) .
-    posts: [Post] @reverse .
-    comments: [Comment] @reverse .
+    posts: [uid] @reverse .
+    comments: [uid] @reverse .
     usage_count: int .
     trending_score: float .
     
