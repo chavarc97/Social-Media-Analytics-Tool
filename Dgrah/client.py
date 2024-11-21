@@ -38,6 +38,7 @@ def main():
     client = create_client(client_stub)
     
     # create schema
+    model.create_schema(client)
     clear_screen()
     print_menu()
     # menu loop
