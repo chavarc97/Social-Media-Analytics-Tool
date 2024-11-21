@@ -4,6 +4,7 @@ import json
 import logging
 from typing import Dict
 import schema
+import relationships
 
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -59,7 +60,19 @@ class CSV_Parser:
             activities = self._load_activities(f"{data_dir}/activity.csv")
 
             # create relationships
-            self.create_user_relationships(f"{data_dir}/users.csv", user_uids)
+            rel = relationships.Relationships(self.client, self.logger)
+            rel.create_user_relationships(f"{data_dir}/users.csv", user_uids)
+            rel.create_post_relationships(f"{data_dir}/post.csv", posts, user_uids, communities, content)
+            rel.create_comment_relationships(f"{data_dir}/comment.csv", comments, user_uids, posts)
+            rel.create_pattern_relationships(f"{data_dir}/patterns.csv", patterns, user_uids, communities)
+            rel.create_influence_relationships(f"{data_dir}/influence.csv", influences, user_uids)
+            rel.create_analytics_relationships(f"{data_dir}/analytics.csv", analytics, user_uids)
+            rel.create_activity_relationships(f"{data_dir}/activity.csv", activities, user_uids, communities)
+            rel.create_content_relationships(f"{data_dir}/content.csv", content, posts, comments, user_uids, communities)
+            rel.create_hashtag_relationships(f"{data_dir}/hashtags.csv", hashtags, posts, comments)
+            rel.create_community_relationships(f"{data_dir}/communities.csv", communities, user_uids, posts, patterns)
+            rel.create_trend_relationships(f"{data_dir}/trends.csv", trends, user_uids)
+            
             pass
         except Exception as e:
             self.logger.error(f"Error loading data: {str(e)}")
@@ -370,53 +383,3 @@ class CSV_Parser:
             txn.discard()
         return resp.uids
     
-    def create_user_relationships(self, file_path: str, user_uids: Dict):
-        """Create relationships between users (follows, followers) and their trends/communities"""
-        txn = self.client.txn()
-        try:
-            edges = []
-            with open(file_path, 'r') as file:
-                reader = csv.DictReader(file)
-                for row in reader:
-                    user_uid = user_uids[row["user_id"]]
-                    
-                    # Process follows relationships
-                    if row["follows"]:
-                        follows_list = row["follows"].split(",")
-                        for followed_id in follows_list:
-                            if followed_id in user_uids:
-                                edges.append({
-                                    "uid": user_uid,
-                                    "follows": {
-                                        "uid": user_uids[followed_id]
-                                    }
-                                })
-                    
-                    # Process trends relationships
-                    if row["trends"]:
-                        trends_list = row["trends"].split(",")
-                        for trend_id in trends_list:
-                            edges.append({
-                                "uid": user_uid,
-                                "follows_trend": {
-                                    "uid": "_:" + trend_id
-                                }
-                            })
-                    
-                    # Process community memberships
-                    if row["communities"]:
-                        communities_list = row["communities"].split(",")
-                        for community_id in communities_list:
-                            edges.append({
-                                "uid": user_uid,
-                                "member_of": {
-                                    "uid": "_:" + community_id
-                                }
-                            })
-            
-            self.logger.info(f"Creating {len(edges)} user relationships")
-            resp = txn.mutate(set_obj=edges)
-            txn.commit()
-            return resp
-        finally:
-            txn.discard()
