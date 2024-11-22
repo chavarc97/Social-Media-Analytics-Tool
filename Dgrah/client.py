@@ -1,6 +1,7 @@
 import os
 import pydgraph
 import model
+import queries
 
 DGRAPH_URI = os.getenv("DGRAPH_URI", "localhost:9080")
 
@@ -48,7 +49,8 @@ def main():
         if option == 1:
             model.create_data(client)
         elif option == 2:
-            model.query_data(client)
+            q = queries.Queries(client)
+            q.query_menu()
         elif option == 3:
             pass
         elif option == 4:
