@@ -42,9 +42,10 @@ def main():
     # create schema
     model.create_schema(client)
     clear_screen()
-    print_menu()
     # menu loop
     while True:
+        clear_screen()
+        print_menu()
         option = int(input("Enter option: "))
         if option == 1:
             model.create_data(client)
@@ -62,7 +63,6 @@ def main():
         else:
             print("Invalid option")
             clear_screen()
-            print_menu()
 
 
 if __name__ == "__main__":
