@@ -102,39 +102,48 @@ def get_activity_logs(user_id):
     logs = ActivityLog.get_recent_logs(user_id, limit=10)
     return jsonify({"activity_logs": logs}), 200
 
-#search
 @routes.route('/search', methods=['GET'])
 def search():
     query = request.args.get('query', '').strip()
-    search_type = request.args.get('type', 'all')  
+    search_type = request.args.get('type', 'all')  # 'profiles', 'content', or 'all'
     limit = int(request.args.get('limit', 10))
     skip = int(request.args.get('skip', 0))
 
+    # Validate input
     if not query:
-        return jsonify({"error": "Search query is required"}), 400
+        return jsonify({"success": False, "error": "Search query is required"}), 400
+    if search_type not in ['profiles', 'content', 'all']:
+        return jsonify({"success": False, "error": "Invalid search type"}), 400
+    if limit <= 0 or skip < 0:
+        return jsonify({"success": False, "error": "Limit must be greater than 0 and skip must be non-negative"}), 400
 
+    # Perform search
     results = {}
-    if search_type in ['profiles', 'all']:
-        profiles = User.collection.aggregate([
-            {"$search": {"text": {"query": query, "path": ["username", "profile.full_name", "bio"]}}},
-            {"$project": {"username": 1, "profile": 1, "score": {"$meta": "searchScore"}}},
-            {"$sort": {"score": -1}},
-            {"$skip": skip},
-            {"$limit": limit}
-        ])
-        results["profiles"] = list(profiles)
+    try:
+        if search_type in ['profiles', 'all']:
+            profiles = User.collection.aggregate([
+                {"$search": {"text": {"query": query, "path": ["username", "profile.full_name", "bio"]}}},
+                {"$project": {"username": 1, "profile": 1, "score": {"$meta": "searchScore"}}},
+                {"$sort": {"score": -1}},
+                {"$skip": skip},
+                {"$limit": limit}
+            ])
+            results["profiles"] = list(profiles)
 
-    if search_type in ['content', 'all']:
-        content = Content.collection.aggregate([
-            {"$search": {"text": {"query": query, "path": ["text", "tags"]}}},
-            {"$project": {"text": 1, "tags": 1, "user_id": 1, "score": {"$meta": "searchScore"}}},
-            {"$sort": {"score": -1}},
-            {"$skip": skip},
-            {"$limit": limit}
-        ])
-        results["content"] = list(content)
+        if search_type in ['content', 'all']:
+            content = Content.collection.aggregate([
+                {"$search": {"text": {"query": query, "path": ["text", "tags"]}}},
+                {"$project": {"text": 1, "tags": 1, "user_id": 1, "score": {"$meta": "searchScore"}}},
+                {"$sort": {"score": -1}},
+                {"$skip": skip},
+                {"$limit": limit}
+            ])
+            results["content"] = list(content)
 
-    return jsonify({"success": True, "data": results}), 200
+        return jsonify({"success": True, "data": results}), 200
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 #ui
 @routes.route('/ui-preferences/<user_id>', methods=['GET', 'POST'])
