@@ -34,7 +34,8 @@ def find_by_username(username):
 
 @staticmethod
 def find_by_email(email):
-    return User.collection.find_one({"email": email})
+    user = User.collection.find_one({"email": email}, {"hashed_password": 0, "two_factor_auth.secret_key": 0})
+    return user
 
 @staticmethod
 def update_user(user_id, updates):
@@ -100,12 +101,14 @@ class ActivityLog:
         }
         return ActivityLog.collection.insert_one(log_entry)
 
-    @staticmethod
-    def get_recent_logs(user_id, limit=10):
-        return list(
-            ActivityLog.collection.find({"user_id": ObjectId(user_id)}).sort("timestamp", -1).limit(limit)
-        )
-
+@staticmethod
+def get_recent_logs(user_id, limit=10, skip=0):
+    return list(
+        ActivityLog.collection.find({"user_id": ObjectId(user_id)})
+        .sort("timestamp", -1)
+        .skip(skip)
+        .limit(limit)
+    )
 
 class Content:
     collection = db["content"]
@@ -155,21 +158,30 @@ class Connection:
 class Notification:
     collection = db["notifications"]
 
-    @staticmethod
-    def send_notification(user_id, message, action_link):
-        notification = {
-            "user_id": ObjectId(user_id),
-            "message": message,
-            "action_link": action_link,
-            "created_at": datetime.datetime.utcnow(),
-            "is_read": False
-        }
-        return Notification.collection.insert_one(notification)
+@staticmethod
+def send_notification(user_id, message, action_link):
+    notification = {
+        "user_id": ObjectId(user_id),
+        "message": message,
+        "action_link": action_link,
+        "created_at": datetime.datetime.utcnow(),
+        "is_read": False
+    }
+    return Notification.collection.insert_one(notification)
 
-    @staticmethod
-    def get_unread_notifications(user_id):
-        return list(Notification.collection.find({"user_id": ObjectId(user_id), "is_read": False}))
+@staticmethod
+def get_unread_notifications(user_id):
+    return list(Notification.collection.find({"user_id": ObjectId(user_id), "is_read": False}))
 
-    @staticmethod
-    def mark_as_read(notification_id):
+@staticmethod
+def mark_as_read(notification_id):
         return Notification.collection.update_one({"_id": ObjectId(notification_id)}, {"$set": {"is_read": True}})
+    
+@staticmethod
+def invalidate_session(session_token):
+    return Session.collection.delete_one({"session_token": session_token})
+
+@staticmethod
+def invalidate_all_sessions(user_id):
+    return Session.collection.delete_many({"user_id": ObjectId(user_id)})
+
