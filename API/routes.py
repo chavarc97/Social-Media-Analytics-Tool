@@ -4,10 +4,10 @@ import uuid
 from model import User, PasswordReset, Session, ActivityLog, Content, Connection, Notification
 from bson.errors import InvalidId
 
-# Create a Blueprint for the routes
+#create a Blueprint for the routes
 routes = Blueprint('routes', __name__)
 
-# User registration
+#user registration
 @routes.route('/register', methods=['POST'])
 def register_user():
     data = request.json
@@ -24,7 +24,7 @@ def register_user():
     user = User.create_user(data['username'], data['email'], hashed_password, profile)
     return jsonify({"message": "User registered successfully", "user_id": str(user.inserted_id)}), 201
 
-# User login
+#user login
 @routes.route('/login', methods=['POST'])
 def login_user():
     data = request.json
@@ -36,7 +36,7 @@ def login_user():
 
     return jsonify({"error": "Invalid username or password"}), 401
 
-# Password reset request
+#password reset request
 @routes.route('/password-reset', methods=['POST'])
 def request_password_reset():
     data = request.json
@@ -47,7 +47,7 @@ def request_password_reset():
         return jsonify({"message": "Password reset token generated", "reset_token": reset_token}), 200
     return jsonify({"error": "Email not found"}), 404
 
-# Reset password
+#reset password
 @routes.route('/password-reset/<token>', methods=['POST'])
 def reset_password(token):
     data = request.json
@@ -59,7 +59,7 @@ def reset_password(token):
         return jsonify({"message": "Password reset successfully"}), 200
     return jsonify({"error": "Invalid or expired token"}), 400
 
-# Create content
+#create content
 @routes.route('/content', methods=['POST'])
 def create_content():
     data = request.json
@@ -72,7 +72,7 @@ def create_content():
     )
     return jsonify({"message": "Content created successfully", "content_id": str(content.inserted_id)}), 201
 
-# Follow or unfollow a user
+#ollow or unfollow a user
 @routes.route('/follow', methods=['POST'])
 def follow_user():
     data = request.json
@@ -84,19 +84,19 @@ def follow_user():
         return jsonify({"message": "Unfollowed successfully"}), 200
     return jsonify({"error": "Invalid action"}), 400
 
-# Get unread notifications
+#unread notifications
 @routes.route('/notifications/unread/<user_id>', methods=['GET'])
 def get_unread_notifications(user_id):
     notifications = Notification.get_unread_notifications(user_id)
     return jsonify({"unread_notifications": notifications}), 200
 
-# Mark notification as read
+#notification as read
 @routes.route('/notifications/read/<notification_id>', methods=['POST'])
 def mark_notification_as_read(notification_id):
     Notification.mark_as_read(notification_id)
     return jsonify({"message": "Notification marked as read"}), 200
 
-# Get recent activity logs
+#recent activity logs
 @routes.route('/activity/<user_id>', methods=['GET'])
 def get_activity_logs(user_id):
     logs = ActivityLog.get_recent_logs(user_id, limit=10)
@@ -106,7 +106,9 @@ def get_activity_logs(user_id):
 @routes.route('/search', methods=['GET'])
 def search():
     query = request.args.get('query', '').strip()
-    search_type = request.args.get('type', 'all')  # 'profiles', 'content', or 'all'
+    search_type = request.args.get('type', 'all')  
+    limit = int(request.args.get('limit', 10))
+    skip = int(request.args.get('skip', 0))
 
     if not query:
         return jsonify({"error": "Search query is required"}), 400
@@ -117,7 +119,8 @@ def search():
             {"$search": {"text": {"query": query, "path": ["username", "profile.full_name", "bio"]}}},
             {"$project": {"username": 1, "profile": 1, "score": {"$meta": "searchScore"}}},
             {"$sort": {"score": -1}},
-            {"$limit": 10}
+            {"$skip": skip},
+            {"$limit": limit}
         ])
         results["profiles"] = list(profiles)
 
@@ -126,12 +129,14 @@ def search():
             {"$search": {"text": {"query": query, "path": ["text", "tags"]}}},
             {"$project": {"text": 1, "tags": 1, "user_id": 1, "score": {"$meta": "searchScore"}}},
             {"$sort": {"score": -1}},
-            {"$limit": 10}
+            {"$skip": skip},
+            {"$limit": limit}
         ])
         results["content"] = list(content)
 
-    return jsonify(results), 200
+    return jsonify({"success": True, "data": results}), 200
 
+#ui
 @routes.route('/ui-preferences/<user_id>', methods=['GET', 'POST'])
 def manage_ui_preferences(user_id):
     if request.method == 'GET':
