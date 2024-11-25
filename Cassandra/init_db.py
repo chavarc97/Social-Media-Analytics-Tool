@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from cassandra.cluster import Cluster
 import csv
+import uuid
 
 # Step 1: Connect to Cassandra DB
 def connect_to_cassandra(keyspace):
@@ -107,8 +108,18 @@ def seed_data_from_csv(session, table_name, csv_file, columns):
         for row in reader:
             placeholders = ', '.join(['%s'] * len(columns))
             query = f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({placeholders})"
-            session.execute(query, [row[col] for col in columns])
+            # Convert post_id to UUID if present
+            values = [convert_value(col, row[col]) for col in columns]
+            session.execute(query, values)
     print(f"Data seeded into {table_name} from {csv_file}.")
+
+def convert_value(col, value):
+    if col == "post_id":
+        return uuid.UUID(value)
+    elif col == "error_code":
+        return int(value)
+    # Add other column-specific conversions as needed
+    return value
 
 # Main execution
 def main():
