@@ -4,8 +4,13 @@ import csv
 
 # Step 1: Connect to Cassandra DB
 def connect_to_cassandra(keyspace):
-    cluster = Cluster(['127.0.0.1'])
+    cluster = Cluster(['localhost'])
     session = cluster.connect()
+    CREATE_KEYSPACE = """
+        CREATE KEYSPACE IF NOT EXISTS {}
+        WITH replication = {{ 'class': 'SimpleStrategy', 'replication_factor': {} }}
+    """
+    session.execute(CREATE_KEYSPACE.format(keyspace, 1))
     session.set_keyspace(keyspace)
     return session
 
@@ -115,13 +120,13 @@ def main():
     
     # Step 3: Seed data
     csv_files = {
-        "login_activity": ("login_activity.csv", ["username", "login_time", "email", "device", "ip", "location"]),
-        "account_activity": ("account_activity.csv", ["username", "action_time", "email", "action_type", "device"]),
-        "profile_changes": ("profile_changes.csv", ["username", "change_time", "profile_change", "old_value", "new_value", "change_type", "change_src"]),
-        "post_activity": ("post_activity.csv", ["username", "post_time", "email", "post_id", "post_ip", "device", "post_location"]),
-        "error_logs": ("error_logs.csv", ["username", "error_time", "email", "section", "error_message", "error_code"]),
-        "search_activity": ("search_activity.csv", ["username", "search_timestamp", "email", "search_query", "search_location", "device", "ip"]),
-        "friend_requests": ("friend_requests.csv", ["sender_username", "receiver_username", "request_time", "status", "request_location"])
+        "login_activity": ("Cassandra/data/login_activity.csv", ["username", "login_time", "email", "device", "ip", "location"]),
+        "account_activity": ("Cassandra/data/account_activity.csv", ["username", "action_time", "email", "action_type", "device"]),
+        "profile_changes": ("Cassandra/data/profile_changes.csv", ["username", "change_time", "profile_change", "old_value", "new_value", "change_type", "change_src"]),
+        "post_activity": ("Cassandra/data/post_activity.csv", ["username", "post_time", "email", "post_id", "post_ip", "device", "post_location"]),
+        "error_logs": ("Cassandra/data/error_logs.csv", ["username", "error_time", "email", "section", "error_message", "error_code"]),
+        "search_activity": ("Cassandra/data/search_activity.csv", ["username", "search_timestamp", "email", "search_query", "search_location", "device", "ip"]),
+        "friend_requests": ("Cassandra/data/friend_requests.csv", ["sender_username", "receiver_username", "request_time", "status", "request_location"])
     }
     
     for table, (csv_file, columns) in csv_files.items():
