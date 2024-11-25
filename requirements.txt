@@ -7,4 +7,9 @@ time_uuid
 tabulate
 pydgraph
 pandas
-
+flask
+logging_config
+config
+decouple
+cerberus
+werkzeug
