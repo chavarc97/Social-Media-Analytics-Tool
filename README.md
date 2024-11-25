@@ -6,7 +6,7 @@ Start by setting the python virtual env
 
 Run Mongo
 
->
+> docker run --name mongodb -d -p 27017:27017 mongo
 
 Run Cassandra
 
@@ -14,6 +14,6 @@ Run Cassandra
 
 Run DGraph
 
->
+> docker run --name dgraph -d -p 8080:8080 -p 9080:9080 dgraph/standalone
 
 Run the server
