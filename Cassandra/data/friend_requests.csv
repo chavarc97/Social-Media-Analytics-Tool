@@ -1,0 +1,6 @@
+sender_username,receiver_username,request_time,status,request_location
+user1,user2,2024-11-25T16:00:00Z,Pending,USA
+user3,user4,2024-11-25T16:05:00Z,Accepted,UK
+user5,user1,2024-11-25T16:10:00Z,Rejected,Australia
+user2,user3,2024-11-25T16:15:00Z,Pending,Canada
+user4,user5,2024-11-25T16:20:00Z,Accepted,India

@@ -1,0 +1,6 @@
+username,error_time,email,section,error_message,error_code
+user1,2024-11-25T14:00:00Z,user1@example.com,Login,Invalid password,401
+user2,2024-11-25T14:05:00Z,user2@example.com,Profile,Timeout error,504
+user3,2024-11-25T14:10:00Z,user3@example.com,Post,Post not found,404
+user4,2024-11-25T14:15:00Z,user4@example.com,Search,Bad request,400
+user5,2024-11-25T14:20:00Z,user5@example.com,Friend Request,Request failed,500

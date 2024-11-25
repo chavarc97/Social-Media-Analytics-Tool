@@ -1,0 +1,6 @@
+username,action_time,email,action_type,device
+user1,2024-11-25T11:00:00Z,user1@example.com,Login,Desktop
+user2,2024-11-25T11:05:00Z,user2@example.com,Logout,Mobile
+user3,2024-11-25T11:10:00Z,user3@example.com,Update,Tablet
+user4,2024-11-25T11:15:00Z,user4@example.com,Delete,Desktop
+user5,2024-11-25T11:20:00Z,user5@example.com,Login,Mobile

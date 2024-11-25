@@ -1,0 +1,6 @@
+username,change_time,profile_change,old_value,new_value,change_type,change_src
+user1,2024-11-25T12:00:00Z,Name,John,Johnny,Edit,Web
+user2,2024-11-25T12:05:00Z,Photo,old_photo.jpg,new_photo.jpg,Upload,Mobile
+user3,2024-11-25T12:10:00Z,Bio,Hello!,Hello there!,Edit,Tablet
+user4,2024-11-25T12:15:00Z,Email,old@example.com,new@example.com,Edit,Desktop
+user5,2024-11-25T12:20:00Z,Name,Alice,Alicia,Edit,Web
