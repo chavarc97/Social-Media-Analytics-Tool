@@ -1,8 +1,8 @@
 import pydgraph
 import csv
-import json
-import logging
 from typing import Dict
+import logging
+from . import schema
 
 
 class Relationships:

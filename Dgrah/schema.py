@@ -220,3 +220,7 @@ hashtags_schema = """
     trending_score: float .
     
 """
+
+global_schema = user_schema + post_schema + comment_schema + community_schema + content_schema + \
+    influence_schema + activity_schema + analytics_schema + \
+    trend_schema + pattern_schema + hashtags_schema

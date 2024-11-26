@@ -1,7 +1,8 @@
 import os
 import pydgraph
-import model
-import queries
+from . import model
+from . import queries
+from . import utils  # For clear_screen() and other utilities
 
 DGRAPH_URI = os.getenv("DGRAPH_URI", "localhost:9080")
 
@@ -30,10 +31,6 @@ def close_client_stub(client_stub):
     client_stub.close()
 
 
-def clear_screen():
-    os.system("cls" if os.name == "nt" else "clear")
-
-
 def main():
     # Init Client Stub and Dgraph Client
     client_stub = create_client_stub()
@@ -41,10 +38,10 @@ def main():
 
     # create schema
     model.create_schema(client)
-    clear_screen()
+    utils.clear_screen()
     # menu loop
     while True:
-        clear_screen()
+        utils.clear_screen()
         print_menu()
         option = int(input("Enter option: "))
         if option == 1:
@@ -62,7 +59,7 @@ def main():
             exit(0)
         else:
             print("Invalid option")
-            clear_screen()
+            utils.clear_screen()
 
 
 if __name__ == "__main__":
