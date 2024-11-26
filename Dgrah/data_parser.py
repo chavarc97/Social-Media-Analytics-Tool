@@ -3,8 +3,9 @@ import csv
 import json
 import logging
 from typing import Dict
-import schema
-import relationships
+import os
+from . import schema
+from . import relationships
 
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -42,9 +43,13 @@ class CSV_Parser:
         self.logger.info(
             f"Schema loaded: {users, posts, comments, communities, trends, analytics, patterns, activities, influences, content}"
         )
+        
 
     def load_data(self, data_dir: str):
         """Load all CSV files from the directory"""
+        # Verify the directory exists
+        if not os.path.exists(data_dir):
+            raise FileNotFoundError(f"Data directory not found: {data_dir}")
         try:
             # process base nodes
             user_uids = self._load_users(f"{data_dir}/users.csv")

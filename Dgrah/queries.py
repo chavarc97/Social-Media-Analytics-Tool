@@ -1,7 +1,7 @@
 import json
-import client as c
 from typing import Dict
 from datetime import datetime, timedelta
+from . import utils
 
 
 class Queries:
@@ -30,9 +30,9 @@ class Queries:
             option = int(input('Enter option: '))
             match option:
                 case 1:
-                    c.clear_screen()
+                    utils.clear_screen()
                     users = self.available_usrs()
-                    self.print_dict(users)
+                    utils.print_dict(users)
                     user = str(input('Enter username: '))
                     print("**********************************************")
                     print('Tracking user interactions...')
@@ -40,9 +40,9 @@ class Queries:
                     self.track_user_interactions(user)
                     break
                 case 2:
-                    c.clear_screen()
+                    utils.clear_screen()
                     users = self.available_usrs()
-                    self.print_dict(users)
+                    utils.print_dict(users)
                     user = str(input('Enter username: '))
                     print("**********************************************")
                     print('Analyzing follower network...')
@@ -50,14 +50,14 @@ class Queries:
                     self.analyze_follower_network(user)
                     break
                 case 3:
-                    c.clear_screen()
+                    utils.clear_screen()
                     print("**********************************************")
                     print('Getting trending topics...')
                     print("**********************************************")
                     self.get_trending_topics()
                     break
                 case 4:
-                    c.clear_screen()
+                    utils.clear_screen()
                     print("**********************************************")
                     print('Generating user feed...')
                     print("**********************************************")
@@ -67,7 +67,7 @@ class Queries:
                     self.generate_user_feed(user)
                     break
                 case 5:
-                    c.clear_screen()
+                    utils.clear_screen()
                     print("**********************************************")
                     print('Monitoring community health metrics...')
                     print("**********************************************")
@@ -77,7 +77,7 @@ class Queries:
                     self.monitor_community_health(community)
                     break
                 case 6:
-                    c.clear_screen()
+                    utils.clear_screen()
                     print("**********************************************")
                     print('Analyzing user behavior patterns...')
                     print("**********************************************")
@@ -87,7 +87,7 @@ class Queries:
                     self.analyze_user_patterns(user)
                     break
                 case 7:
-                    c.clear_screen()
+                    utils.clear_screen()
                     print("**********************************************")
                     print('Getting personalized content recommendations...')
                     print("**********************************************")
@@ -97,7 +97,7 @@ class Queries:
                     self.get_recommendations(user)
                     break
                 case 8:
-                    c.clear_screen()
+                    utils.clear_screen()
                     print("**********************************************")
                     print('Getting performance metrics for a post...')
                     print("**********************************************")
@@ -116,7 +116,7 @@ class Queries:
                     finally:    
                         break
                 case 9:
-                    c.clear_screen()
+                    utils.clear_screen()
                     print("**********************************************")
                     print('Analyzing network growth...')
                     print("**********************************************")
@@ -129,7 +129,7 @@ class Queries:
                     finally:
                         break
                 case 10:
-                    c.clear_screen()
+                    utils.clear_screen()
                     print("**********************************************")
                     print('Calculating user influence...')
                     print("**********************************************")
@@ -139,7 +139,7 @@ class Queries:
                     self.calculate_user_influence(user)
                     break
                 case 11:
-                    c.clear_screen()
+                    utils.clear_screen()
                     print("**********************************************")
                     print('Analyzing content lifecycle patterns...')
                     print("**********************************************")
@@ -148,9 +148,8 @@ class Queries:
                     c.print_menu()
                 case 12:
                     # go back to main menu
-                    c.clear_screen()
-                    c.print_menu()
-                    break
+                    utils.clear_screen()
+                    return
                 case _:
                     print('Invalid option')
                     break
@@ -977,11 +976,9 @@ class Queries:
         """Get all available users in the database."""
         users = {}
         query = """{
-            
-                user(func: has(username)) {
-                    username
-                }
-    
+            user(func: has(username)) {
+                username
+            }
         }"""
         try:
             res = self.client.txn(read_only=True).query(query)
@@ -993,6 +990,7 @@ class Queries:
         except Exception as e:
             print(f"Error querying users: {str(e)}")
             return None
+
 
     def available_communities(self) -> Dict:
         """Get all available communities in the database."""

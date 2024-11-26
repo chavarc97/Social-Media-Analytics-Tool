@@ -1,6 +1,7 @@
 import pydgraph
 import json
-import data_parser
+import os
+from . import data_parser
 
 def create_schema(client):
     schema = data_parser.CSV_Parser(client=client)
@@ -9,7 +10,8 @@ def create_schema(client):
     
 def create_data(client):
     data = data_parser.CSV_Parser(client=client)
-    data.load_data("data")
+    data_dir = os.path.join(os.path.dirname(__file__), 'data')
+    data.load_data(data_dir)
 
 
 def drop_all(client):
