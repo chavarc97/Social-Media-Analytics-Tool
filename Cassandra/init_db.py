@@ -4,8 +4,12 @@ import csv
 import uuid
 
 # Step 1: Connect to Cassandra DB
+
+
 def connect_to_cassandra(keyspace):
-    cluster = Cluster(['localhost'])
+    cluster = Cluster(['localhost'], protocol_version=4,  # Try explicit protocol version
+                      port=9042, 
+                      )
     session = cluster.connect()
     CREATE_KEYSPACE = """
         CREATE KEYSPACE IF NOT EXISTS {}
@@ -16,6 +20,8 @@ def connect_to_cassandra(keyspace):
     return session
 
 # Step 2: Create tables
+
+
 def create_tables(session):
     queries = [
         """
@@ -102,6 +108,8 @@ def create_tables(session):
     print("Tables created successfully.")
 
 # Step 3: Seed data from CSV files
+
+
 def seed_data_from_csv(session, table_name, csv_file, columns):
     with open(csv_file, 'r') as file:
         reader = csv.DictReader(file)
@@ -113,6 +121,7 @@ def seed_data_from_csv(session, table_name, csv_file, columns):
             session.execute(query, values)
     print(f"Data seeded into {table_name} from {csv_file}.")
 
+
 def convert_value(col, value):
     if col == "post_id":
         return uuid.UUID(value)
@@ -122,13 +131,15 @@ def convert_value(col, value):
     return value
 
 # Main execution
+
+
 def main():
     keyspace = 'social_media'
     session = connect_to_cassandra(keyspace)
-    
+
     # Step 2: Create tables
     create_tables(session)
-    
+
     # Step 3: Seed data
     csv_files = {
         "login_activity": ("Cassandra/data/login_activity.csv", ["username", "login_time", "email", "device", "ip", "location"]),
@@ -139,9 +150,10 @@ def main():
         "search_activity": ("Cassandra/data/search_activity.csv", ["username", "search_timestamp", "email", "search_query", "search_location", "device", "ip"]),
         "friend_requests": ("Cassandra/data/friend_requests.csv", ["sender_username", "receiver_username", "request_time", "status", "request_location"])
     }
-    
+
     for table, (csv_file, columns) in csv_files.items():
         seed_data_from_csv(session, table, csv_file, columns)
+
 
 if __name__ == "__main__":
     main()

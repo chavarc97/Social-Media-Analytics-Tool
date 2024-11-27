@@ -1,6 +1,5 @@
 import os
-import model
-import model
+from . import model
 from cassandra.cluster import Cluster
 import uuid
 

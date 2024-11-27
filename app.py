@@ -1,9 +1,11 @@
 from Dgrah.client import main as clientMain
 from Dgrah import init_dgraph
+from Cassandra import init_db, client as cassandraMain
 import os
 
 
 D_client, D_client_stub = init_dgraph.run()
+init_db.main()
 
 def print_menu_op():
     mm_options = {
@@ -26,6 +28,7 @@ def main():
             if option == 1:
                 clientMain(D_client, D_client_stub)
             elif option == 2:
+                cassandraMain.main()
                 pass
             elif option == 3:
                 pass
