@@ -91,7 +91,42 @@ class CSV_Parser:
         except Exception as e:
             self.logger.error(f"Error dropping data: {str(e)}")
             raise
+        
+    def delete_user(self):
+        """Delete users with influenceScore less than a given threshold"""
+        min_influence = 50.0
+        query = """
+        query findUsers($min_influence: float) {
+            usersToDelete(func: lt(influenceScore, $min_influence)) {
+                uid
+            }
+        }
+        """
+        variables = {
+            '$min_influence': str(min_influence)
+        }
+        try:
+            # Step 1: Query users that match the condition
+            res = self.client.txn(read_only=True).query(query, variables=variables)
+            result = json.loads(res.json)
+            
+            # Step 2: Prepare the mutation for deletion
+            users_to_delete = result.get("usersToDelete", [])
+            if users_to_delete:
+                uids_to_delete = [user["uid"] for user in users_to_delete]
+                mutation = {
+                    "delete": [{"uid": uid} for uid in uids_to_delete]
+                }
+                # Step 3: Perform the delete mutation
+                self.client.txn().mutate(set_json=mutation)
+                print(f"Deleted {len(uids_to_delete)} users.")
+            else:
+                print("No users found to delete.")
 
+        except Exception as e:
+            print(f"Error deleting users: {str(e)}")
+            
+        
     def _create_mutation(self, data: Dict) -> Dict:
         """Create a mutation object for pydgraph"""
         txn = self.client.txn()

@@ -18,3 +18,7 @@ def drop_all(client):
     drop = data_parser.CSV_Parser(client=client)
     drop.drop_all()
     
+    
+def delete_user(client, ):
+    delete = data_parser.CSV_Parser(client)
+    delete.delete_user()

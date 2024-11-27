@@ -1,61 +1,38 @@
-import os
-import pydgraph
 from . import model
 from . import queries
 from . import utils  # For clear_screen() and other utilities
-
-DGRAPH_URI = os.getenv("DGRAPH_URI", "localhost:9080")
-
+from . import init_dgraph
 
 def print_menu():
     mm_options = {
-        1: "Create data",
-        2: "Query data",
-        3: "Delete users with influenceScore less than a given threshold. i.e. > 5.0",
-        4: "Drop All",
-        5: "Exit",
+        1: "Query data",
+        2: "Delete users with influenceScore less than a given threshold. i.e. > 5.0",
+        3: "Drop All",
+        4: "Exit",
     }
     for key in mm_options.keys():
         print(key, "--", mm_options[key])
 
 
-def create_client_stub():
-    return pydgraph.DgraphClientStub(DGRAPH_URI)
-
-
-def create_client(client_stub):
-    return pydgraph.DgraphClient(client_stub)
-
-
-def close_client_stub(client_stub):
-    client_stub.close()
-
-
-def main():
-    # Init Client Stub and Dgraph Client
-    client_stub = create_client_stub()
-    client = create_client(client_stub)
-
-    # create schema
-    model.create_schema(client)
-    utils.clear_screen()
+def main(client, client_stub):   
     # menu loop
     while True:
         utils.clear_screen()
         print_menu()
         option = int(input("Enter option: "))
         if option == 1:
-            model.create_data(client)
-        elif option == 2:
             q = queries.Queries(client)
             q.query_menu()
+        elif option == 2:
+
+            model.delete_user(client)
         elif option == 3:
-            pass
+            model.drop_all(client)
+
         elif option == 4:
             model.drop_all(client)
-        elif option == 5:
-            model.drop_all(client)
-            close_client_stub(client_stub)
+            print("Exiting...")
+            init_dgraph.close_client_stub(client_stub)
             exit(0)
         else:
             print("Invalid option")
