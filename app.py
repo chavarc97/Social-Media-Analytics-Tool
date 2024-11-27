@@ -7,11 +7,10 @@ D_client, D_client_stub = init_dgraph.run()
 
 def print_menu_op():
     mm_options = {
-        1: "Content Analysis",
-        2: "Search",
-        3: "View Logs",
-        4: "Settings",
-        5: "Exit"
+        1: "Dgraph",
+        2: "Cassandra",
+        3: "MongoDB",
+        4: "Exit"
     }
     print("Main Menu")
     for key, value in mm_options.items():
@@ -31,8 +30,6 @@ def main():
             elif option == 3:
                 pass
             elif option == 4:
-                pass
-            elif option == 5:
                 print("Exiting...")
                 exit(0)
             else:
@@ -44,3 +41,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
