@@ -23,7 +23,8 @@ def close_client_stub(client_stub):
 def run():
     client_stub = create_client_stub()
     client = pydgraph.DgraphClient(client_stub)
-        
+    
+    model.drop_all(client) # Reset the database
     create_schema(client)
     load_data(client)
         
