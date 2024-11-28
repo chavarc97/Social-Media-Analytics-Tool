@@ -10,7 +10,8 @@ app = Flask(__name__)
 app.config.from_object(DevelopmentConfig)
 
 try:
-    mongo_uri = config("MONGO_URI", default="mongodb://localhost:9080/app_database")
+    mongo_uri = config("MONGO_URI","mongodb://localhost:27017/app_database")
+    app.config["MONGO_URI"] = MONGO_URI
     client = MongoClient(mongo_uri)
     db = client.get_database()
     app.logger.info("Connected to Mongo")
