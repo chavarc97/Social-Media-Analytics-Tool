@@ -3,10 +3,11 @@ from . import queries
 from . import utils  # For clear_screen() and other utilities
 from . import init_dgraph
 
+
 def print_menu():
     mm_options = {
         1: "Query data",
-        2: "Delete users with influenceScore less than a given threshold. i.e. > 5.0",
+        2: "Add User",
         3: "Drop All",
         4: "Exit",
     }
@@ -14,7 +15,21 @@ def print_menu():
         print(key, "--", mm_options[key])
 
 
-def main(client, client_stub):   
+def user_menu(client):
+    print("User Menu")
+    try:
+        username = str(input('Enter username: '))
+        email = str(input('Enter email: '))
+        bio = str(input('Enter bio: '))
+
+        uid = model.create_user(client, username, email, bio)
+        print(f"Successfully created user with UID: {uid}") 
+        model.social_menu(client, uid)
+    except Exception as e:
+        print(f"Failed to create user: {e}")
+
+
+def main(client, client_stub):
     # menu loop
     while True:
         utils.clear_screen()
@@ -24,8 +39,7 @@ def main(client, client_stub):
             q = queries.Queries(client)
             q.query_menu()
         elif option == 2:
-
-            model.delete_user(client)
+            user_menu(client)
         elif option == 3:
             model.drop_all(client)
 
