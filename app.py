@@ -1,7 +1,7 @@
 from Dgrah.client import main as clientMain
 from Dgrah import init_dgraph
 from Cassandra import init_db, client as cassandraMain
-from pymongo import MongoClient
+from Pymongo import MongoClient
 import os
 
 D_client, D_client_stub = init_dgraph.run()
