@@ -35,7 +35,7 @@ def main():
                 cassandraMain.main()
                 pass
             elif option == 3:
-                mongo_menu()
+                main_menu()
                 pass
             elif option == 4:
                 print("Exiting...")
