@@ -4,7 +4,7 @@ from cerberus import Validator
 import datetime
 
 # MongoDB connection
-client = MongoClient("mongodb://localhost:9080/")
+client = MongoClient("mongodb://localhost:27017/")
 db = client["app_database"]
 
 class User:
@@ -184,4 +184,25 @@ def invalidate_session(session_token):
 @staticmethod
 def invalidate_all_sessions(user_id):
     return Session.collection.delete_many({"user_id": ObjectId(user_id)})
+
+[
+    {
+        "_id": ObjectId("64d11111ac78912345678911"),
+        "user_id": ObjectId("64d10f12ac789123456789ab"),
+        "message": "Your post has been liked",
+        "action_link": "/posts/64d10f88ac789123456789ef",
+        "created_at": "2024-11-23T08:00:00Z",
+        "is_read": false
+    },
+    {
+        "_id": ObjectId("64d11122ac78912345678922"),
+        "user_id": ObjectId("64d10f12ac789123456789ab"),
+        "message": "Messi has followed you",
+        "action_link": "/profile/64d10f44ac789123456789dd",
+        "created_at": "2024-11-22T20:00:00Z",
+        "is_read": false
+    }
+]
+
+
 
