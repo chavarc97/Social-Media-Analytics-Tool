@@ -6,9 +6,9 @@ def clear_screen():
 
 def print_menu():
     print("Menu Options:")
-    print("1 -- Add User")
-    print("2 -- Drop All")
-    print("3 -- Exit")
+    print("1. Add User")
+    print("2. Drop All")
+    print("3. Exit")
 
 def add_user_menu():
     username = input("Enter username: ")
