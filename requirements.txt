@@ -13,3 +13,10 @@ config
 decouple
 cerberus
 werkzeug
+pytest
+pytest-flask
+python-dotenv
+marshmallow
+pyjwt
+flask-limiter
+gunicorn
