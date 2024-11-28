@@ -10,7 +10,7 @@ logging.basicConfig(
 logger = logging.getLogger("init_db")
 
 #connection to mongo
-MONGO_URI = "mongodb://localhost:9080/app_database"
+MONGO_URI = "mongodb://localhost:27017/app_database"
 client = MongoClient(MONGO_URI)
 db = client.get_database()
 
