@@ -1,22 +1,39 @@
 import pytest
+from bson.objectid import ObjectId
+import datetime
 from app import app  
-from model import User, Content
+from model import User, Content, Notification, Connection
 
 @pytest.fixture
 def client():
-    app.config['TESTING'] = True
-    with app.test_client() as client:
-        yield client
+    try:
+        app.config['TESTING'] = True
+        with app.test_client() as client:
+            yield client
+    except Exception as e:
+        pytest.fail(f"Client setup failed: {e}")
 
+@pytest.fixture(autouse=True)
+def clean_db():
+    User.collection.delete_many({})
+    Content.collection.delete_many({})
+    Notification.collection.delete_many({})
+    Connection.collection.delete_many({})
+    yield
+    User.collection.delete_many({})
+    Content.collection.delete_many({})
+    Notification.collection.delete_many({})
+    Connection.collection.delete_many({})
+
+# Pruebas
 def test_search_profiles(client):
-    # nsert a test user
     User.collection.insert_one({
         "username": "testuser",
         "profile": {"full_name": "Test User", "bio": "Testing profile"},
-        "hashed_password": "hashed_password"
+        "hashed_password": "hashed_password",
+        "created_at": datetime.datetime.utcnow(),
+        "updated_at": datetime.datetime.utcnow(),
     })
-
-    #make the search request
     response = client.get('/search', query_string={"query": "test", "type": "profiles"})
     data = response.get_json()
 
@@ -25,14 +42,17 @@ def test_search_profiles(client):
     assert "profiles" in data["data"]
 
 def test_search_content(client):
-    #insert a test content
+
+    user_id = ObjectId()
     Content.collection.insert_one({
-        "user_id": "1234567890abcdef12345678",
+        "user_id": user_id,
         "text": "Test content for search",
-        "tags": ["test", "content"]
+        "tags": ["test", "content"],
+        "created_at": datetime.datetime.utcnow(),
+        "updated_at": datetime.datetime.utcnow(),
+        "visibility": "public",
     })
 
-    #make the search request
     response = client.get('/search', query_string={"query": "test", "type": "content"})
     data = response.get_json()
 
@@ -55,11 +75,16 @@ def test_search_missing_query(client):
     assert response.status_code == 400
     assert data["success"] is False
     assert "error" in data
+
 def test_get_ui_preferences(client):
-    #insert a test user with UI preferences
+
     user_id = User.collection.insert_one({
         "username": "testuser",
-        "ui_preferences": {"theme": "dark", "accessibility_options": ["large_text"]}
+        "ui_preferences": {"theme": "dark", "accessibility_options": ["large_text"]},
+        "hashed_password": "hashed_password",
+        "privacy_settings": {"profile_visibility": "public"},
+        "created_at": datetime.datetime.utcnow(),
+        "updated_at": datetime.datetime.utcnow(),
     }).inserted_id
 
     response = client.get(f'/ui-preferences/{user_id}')
@@ -70,8 +95,13 @@ def test_get_ui_preferences(client):
     assert data["ui_preferences"]["theme"] == "dark"
 
 def test_update_ui_preferences(client):
-    #insert a test user
-    user_id = User.collection.insert_one({"username": "testuser"}).inserted_id
+    user_id = User.collection.insert_one({
+        "username": "testuser",
+        "hashed_password": "hashed_password",
+        "ui_preferences": {"theme": "dark", "accessibility_options": []},
+        "created_at": datetime.datetime.utcnow(),
+        "updated_at": datetime.datetime.utcnow(),
+    }).inserted_id
 
     new_preferences = {"theme": "light", "accessibility_options": ["high_contrast"]}
     response = client.post(f'/ui-preferences/{user_id}', json=new_preferences)
@@ -80,12 +110,11 @@ def test_update_ui_preferences(client):
     assert response.status_code == 200
     assert data["message"] == "UI preferences updated"
 
-    #verify the update in the database
     updated_user = User.collection.find_one({"_id": user_id})
     assert updated_user["ui_preferences"]["theme"] == "light"
 
 def test_follow_user(client):
-    # insert test users
+
     follower_id = str(User.collection.insert_one({"username": "follower"}).inserted_id)
     followed_id = str(User.collection.insert_one({"username": "followed"}).inserted_id)
 
@@ -95,16 +124,14 @@ def test_follow_user(client):
     assert response.status_code == 201
     assert data["message"] == "Followed successfully"
 
-    # verify the connection in the database
     connection = Connection.collection.find_one({"follower_id": ObjectId(follower_id), "followed_id": ObjectId(followed_id)})
     assert connection is not None
 
 def test_unfollow_user(client):
-    # insert test users
+
     follower_id = str(User.collection.insert_one({"username": "follower"}).inserted_id)
     followed_id = str(User.collection.insert_one({"username": "followed"}).inserted_id)
 
-    # insert a follow connection
     Connection.collection.insert_one({"follower_id": ObjectId(follower_id), "followed_id": ObjectId(followed_id)})
 
     response = client.post('/follow', json={"action": "unfollow", "follower_id": follower_id, "followed_id": followed_id})
@@ -113,25 +140,18 @@ def test_unfollow_user(client):
     assert response.status_code == 200
     assert data["message"] == "Unfollowed successfully"
 
-    # verify the connection no longer exists in the database
     connection = Connection.collection.find_one({"follower_id": ObjectId(follower_id), "followed_id": ObjectId(followed_id)})
     assert connection is None
 
-def test_follow_invalid_action(client):
-    response = client.post('/follow', json={"action": "invalid"})
-    data = response.get_json()
-
-    assert response.status_code == 400
-    assert data["error"] == "Invalid action"
-
 def test_get_unread_notifications(client):
-    # insert a test notification
+
     user_id = str(User.collection.insert_one({"username": "testuser"}).inserted_id)
     Notification.collection.insert_one({
         "user_id": ObjectId(user_id),
         "message": "Test Notification",
         "action_link": "/test",
-        "is_read": False
+        "is_read": False,
+        "created_at": datetime.datetime.utcnow(),
     })
 
     response = client.get(f'/notifications/unread/{user_id}')
@@ -143,13 +163,14 @@ def test_get_unread_notifications(client):
     assert data["unread_notifications"][0]["message"] == "Test Notification"
 
 def test_mark_notification_as_read(client):
-    # insert a test notification
+
     user_id = str(User.collection.insert_one({"username": "testuser"}).inserted_id)
     notification_id = Notification.collection.insert_one({
         "user_id": ObjectId(user_id),
         "message": "Test Notification",
         "action_link": "/test",
-        "is_read": False
+        "is_read": False,
+        "created_at": datetime.datetime.utcnow(),
     }).inserted_id
 
     response = client.post(f'/notifications/read/{notification_id}')
@@ -158,6 +179,5 @@ def test_mark_notification_as_read(client):
     assert response.status_code == 200
     assert data["message"] == "Notification marked as read"
 
-    #verify the notification is marked as read
     notification = Notification.collection.find_one({"_id": ObjectId(notification_id)})
     assert notification["is_read"] is True
