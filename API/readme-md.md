@@ -9,10 +9,7 @@ source venv/bin/activate  # or `venv\Scripts\activate` on Windows
 pip install -r requirements.txt
 ```
 
-2. Start MongoDB:
-```bash
-mongod --dbpath /path/to/data/directory
-```
+
 
 3. Run the server:
 ```bash
