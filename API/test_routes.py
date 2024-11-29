@@ -1,183 +1,154 @@
 import pytest
-from bson.objectid import ObjectId
+from .app import create_app
+from model import User, Content, Session, ActivityLog
+import json
+from bson import ObjectId
 import datetime
-from app import app  
-from model import User, Content, Notification, Connection
 
 @pytest.fixture
-def client():
-    try:
-        app.config['TESTING'] = True
-        with app.test_client() as client:
-            yield client
-    except Exception as e:
-        pytest.fail(f"Client setup failed: {e}")
+def app():
+    app = create_app('TestingConfig')
+    return app
+
+@pytest.fixture
+def client(app):
+    return app.test_client()
+
+@pytest.fixture
+def db(app):
+    return app.db
 
 @pytest.fixture(autouse=True)
-def clean_db():
-    User.collection.delete_many({})
-    Content.collection.delete_many({})
-    Notification.collection.delete_many({})
-    Connection.collection.delete_many({})
+def cleanup(db):
     yield
-    User.collection.delete_many({})
-    Content.collection.delete_many({})
-    Notification.collection.delete_many({})
-    Connection.collection.delete_many({})
+    db.users.delete_many({})
+    db.sessions.delete_many({})
+    db.content.delete_many({})
+    db.activity_logs.delete_many({})
 
-# Pruebas
-def test_search_profiles(client):
-    User.collection.insert_one({
-        "username": "testuser",
-        "profile": {"full_name": "Test User", "bio": "Testing profile"},
-        "hashed_password": "hashed_password",
-        "created_at": datetime.datetime.utcnow(),
-        "updated_at": datetime.datetime.utcnow(),
+def test_user_registration(client):
+    response = client.post('/register', json={
+        'username': 'testuser',
+        'email': 'test@example.com',
+        'password': 'testpass123'
     })
-    response = client.get('/search', query_string={"query": "test", "type": "profiles"})
-    data = response.get_json()
-
-    assert response.status_code == 200
-    assert data["success"] is True
-    assert "profiles" in data["data"]
-
-def test_search_content(client):
-
-    user_id = ObjectId()
-    Content.collection.insert_one({
-        "user_id": user_id,
-        "text": "Test content for search",
-        "tags": ["test", "content"],
-        "created_at": datetime.datetime.utcnow(),
-        "updated_at": datetime.datetime.utcnow(),
-        "visibility": "public",
-    })
-
-    response = client.get('/search', query_string={"query": "test", "type": "content"})
-    data = response.get_json()
-
-    assert response.status_code == 200
-    assert data["success"] is True
-    assert "content" in data["data"]
-
-def test_search_invalid_type(client):
-    response = client.get('/search', query_string={"query": "test", "type": "invalid"})
-    data = response.get_json()
-
-    assert response.status_code == 400
-    assert data["success"] is False
-    assert "error" in data
-
-def test_search_missing_query(client):
-    response = client.get('/search')
-    data = response.get_json()
-
-    assert response.status_code == 400
-    assert data["success"] is False
-    assert "error" in data
-
-def test_get_ui_preferences(client):
-
-    user_id = User.collection.insert_one({
-        "username": "testuser",
-        "ui_preferences": {"theme": "dark", "accessibility_options": ["large_text"]},
-        "hashed_password": "hashed_password",
-        "privacy_settings": {"profile_visibility": "public"},
-        "created_at": datetime.datetime.utcnow(),
-        "updated_at": datetime.datetime.utcnow(),
-    }).inserted_id
-
-    response = client.get(f'/ui-preferences/{user_id}')
-    data = response.get_json()
-
-    assert response.status_code == 200
-    assert "ui_preferences" in data
-    assert data["ui_preferences"]["theme"] == "dark"
-
-def test_update_ui_preferences(client):
-    user_id = User.collection.insert_one({
-        "username": "testuser",
-        "hashed_password": "hashed_password",
-        "ui_preferences": {"theme": "dark", "accessibility_options": []},
-        "created_at": datetime.datetime.utcnow(),
-        "updated_at": datetime.datetime.utcnow(),
-    }).inserted_id
-
-    new_preferences = {"theme": "light", "accessibility_options": ["high_contrast"]}
-    response = client.post(f'/ui-preferences/{user_id}', json=new_preferences)
-    data = response.get_json()
-
-    assert response.status_code == 200
-    assert data["message"] == "UI preferences updated"
-
-    updated_user = User.collection.find_one({"_id": user_id})
-    assert updated_user["ui_preferences"]["theme"] == "light"
-
-def test_follow_user(client):
-
-    follower_id = str(User.collection.insert_one({"username": "follower"}).inserted_id)
-    followed_id = str(User.collection.insert_one({"username": "followed"}).inserted_id)
-
-    response = client.post('/follow', json={"action": "follow", "follower_id": follower_id, "followed_id": followed_id})
-    data = response.get_json()
-
     assert response.status_code == 201
-    assert data["message"] == "Followed successfully"
+    assert b'User registered successfully' in response.data
 
-    connection = Connection.collection.find_one({"follower_id": ObjectId(follower_id), "followed_id": ObjectId(followed_id)})
-    assert connection is not None
-
-def test_unfollow_user(client):
-
-    follower_id = str(User.collection.insert_one({"username": "follower"}).inserted_id)
-    followed_id = str(User.collection.insert_one({"username": "followed"}).inserted_id)
-
-    Connection.collection.insert_one({"follower_id": ObjectId(follower_id), "followed_id": ObjectId(followed_id)})
-
-    response = client.post('/follow', json={"action": "unfollow", "follower_id": follower_id, "followed_id": followed_id})
-    data = response.get_json()
-
-    assert response.status_code == 200
-    assert data["message"] == "Unfollowed successfully"
-
-    connection = Connection.collection.find_one({"follower_id": ObjectId(follower_id), "followed_id": ObjectId(followed_id)})
-    assert connection is None
-
-def test_get_unread_notifications(client):
-
-    user_id = str(User.collection.insert_one({"username": "testuser"}).inserted_id)
-    Notification.collection.insert_one({
-        "user_id": ObjectId(user_id),
-        "message": "Test Notification",
-        "action_link": "/test",
-        "is_read": False,
-        "created_at": datetime.datetime.utcnow(),
+def test_user_login(client, db):
+    # Create test user
+    test_user = {
+        'username': 'testuser',
+        'email': 'test@example.com',
+        'password': 'testpass123'
+    }
+    client.post('/register', json=test_user)
+    
+    # Test login
+    response = client.post('/login', json={
+        'username': test_user['username'],
+        'password': test_user['password']
     })
-
-    response = client.get(f'/notifications/unread/{user_id}')
-    data = response.get_json()
-
     assert response.status_code == 200
-    assert "unread_notifications" in data
-    assert len(data["unread_notifications"]) == 1
-    assert data["unread_notifications"][0]["message"] == "Test Notification"
+    assert 'token' in response.get_json()
 
-def test_mark_notification_as_read(client):
+def test_2fa_flow(client, db):
+    # Register and enable 2FA
+    client.post('/register', json={
+        'username': 'testuser',
+        'email': 'test@example.com',
+        'password': 'testpass123'
+    })
+    
+    auth_response = client.post('/login', json={
+        'username': 'testuser',
+        'password': 'testpass123'
+    })
+    token = auth_response.get_json()['token']
+    
+    enable_2fa = client.post('/2fa/enable', 
+        headers={'Authorization': token}
+    )
+    assert enable_2fa.status_code == 200
+    assert 'secret' in enable_2fa.get_json()
 
-    user_id = str(User.collection.insert_one({"username": "testuser"}).inserted_id)
-    notification_id = Notification.collection.insert_one({
-        "user_id": ObjectId(user_id),
-        "message": "Test Notification",
-        "action_link": "/test",
-        "is_read": False,
-        "created_at": datetime.datetime.utcnow(),
-    }).inserted_id
+def test_content_creation(client, db):
+    # Register and login
+    client.post('/register', json={
+        'username': 'testuser',
+        'email': 'test@example.com',
+        'password': 'testpass123'
+    })
+    
+    login_response = client.post('/login', json={
+        'username': 'testuser',
+        'password': 'testpass123'
+    })
+    token = login_response.get_json()['token']
+    
+    # Create content
+    response = client.post('/content', 
+        headers={'Authorization': token},
+        json={
+            'text': 'Test content',
+            'tags': ['test']
+        }
+    )
+    assert response.status_code == 201
+    assert 'content_id' in response.get_json()
 
-    response = client.post(f'/notifications/read/{notification_id}')
-    data = response.get_json()
-
+def test_search_functionality(client, db):
+    # Add test data
+    client.post('/register', json={
+        'username': 'searchuser',
+        'email': 'search@example.com',
+        'password': 'testpass123'
+    })
+    
+    # Test search
+    response = client.get('/search?q=searchuser&type=users')
     assert response.status_code == 200
-    assert data["message"] == "Notification marked as read"
+    results = response.get_json()['results']
+    assert len(results) > 0
+    assert results[0]['username'] == 'searchuser'
 
-    notification = Notification.collection.find_one({"_id": ObjectId(notification_id)})
-    assert notification["is_read"] is True
+def test_activity_logging(client, db):
+    # Register user
+    client.post('/register', json={
+        'username': 'testuser',
+        'email': 'test@example.com',
+        'password': 'testpass123'
+    })
+    
+    # Check activity log
+    logs = list(db.activity_logs.find({'action': 'user_registration'}))
+    assert len(logs) > 0
+    assert logs[0]['action'] == 'user_registration'
+
+def test_privacy_settings(client, db):
+    # Setup user
+    client.post('/register', json={
+        'username': 'testuser',
+        'email': 'test@example.com',
+        'password': 'testpass123'
+    })
+    
+    login_response = client.post('/login', json={
+        'username': 'testuser',
+        'password': 'testpass123'
+    })
+    token = login_response.get_json()['token']
+    
+    # Update privacy settings
+    response = client.put('/privacy-settings',
+        headers={'Authorization': token},
+        json={
+            'profile_visibility': 'private',
+            'content_visibility': 'followers'
+        }
+    )
+    assert response.status_code == 200
+
+    # Verify settings
+    user = db.users.find_one({'username': 'testuser'})
+    assert user['privacy_settings']['profile_visibility'] == 'private'

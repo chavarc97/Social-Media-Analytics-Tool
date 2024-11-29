@@ -1,17 +1,36 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
-from model import User, PasswordReset, Session, ActivityLog, Content, Connection, Notification
-from bson.errors import InvalidId
+from model import User, Session, ActivityLog, Content, Connection, Notification
+from bson.objectid import ObjectId
+from functools import wraps
+import jwt
+import datetime
 
-#create a Blueprint for the routes
 routes = Blueprint('routes', __name__)
 
-#user registration
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get('Authorization')
+        if not token:
+            return jsonify({'message': 'Token is missing'}), 401
+        try:
+            session = Session.collection.find_one({"session_token": token})
+            if not session or session['expires_at'] < datetime.datetime.utcnow():
+                return jsonify({'message': 'Token is invalid or expired'}), 401
+            return f(*args, **kwargs)
+        except Exception:
+            return jsonify({'message': 'Token is invalid'}), 401
+    return decorated
+
 @routes.route('/register', methods=['POST'])
-def register_user():
+def register():
     data = request.json
-    if User.find_by_username(data['username']) or User.find_by_email(data['email']):
+    if User.collection.find_one({"$or": [
+        {"username": data['username']},
+        {"email": data['email']}
+    ]}):
         return jsonify({"error": "Username or email already exists"}), 400
 
     hashed_password = generate_password_hash(data['password'])
@@ -21,139 +40,152 @@ def register_user():
         "profilePicUrl": data.get("profilePicUrl", ""),
         "details": data.get("details", {})
     }
-    user = User.create_user(data['username'], data['email'], hashed_password, profile)
-    return jsonify({"message": "User registered successfully", "user_id": str(user.inserted_id)}), 201
+    
+    try:
+        result = User.create_user(data['username'], data['email'], hashed_password, profile)
+        ActivityLog.log_activity(result.inserted_id, "user_registered")
+        return jsonify({"message": "Registration successful", "user_id": str(result.inserted_id)}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-#user login
 @routes.route('/login', methods=['POST'])
-def login_user():
+def login():
     data = request.json
-    user = User.find_by_username(data['username'])
-    if user and check_password_hash(user['hashed_password'], data['password']):
-        session_token = str(uuid.uuid4())
-        Session.create_session(user_id=user["_id"], session_token=session_token)
-        return jsonify({"message": "Login successful", "session_token": session_token}), 200
+    user = User.collection.find_one({"username": data['username']})
+    
+    if not user or not check_password_hash(user['hashed_password'], data['password']):
+        return jsonify({"error": "Invalid credentials"}), 401
 
-    return jsonify({"error": "Invalid username or password"}), 401
+    if user['two_factor_auth']['enabled']:
+        if 'two_factor_token' not in data:
+            return jsonify({"message": "2FA required", "requires_2fa": True}), 200
+        if not User.verify_2fa(user['_id'], data['two_factor_token']):
+            return jsonify({"error": "Invalid 2FA token"}), 401
 
-#password reset request
-@routes.route('/password-reset', methods=['POST'])
-def request_password_reset():
-    data = request.json
-    user = User.find_by_email(data['email'])
-    if user:
-        reset_token = str(uuid.uuid4())
-        PasswordReset.create_request(user_id=user["_id"], reset_token=reset_token)
-        return jsonify({"message": "Password reset token generated", "reset_token": reset_token}), 200
-    return jsonify({"error": "Email not found"}), 404
+    session_token = str(uuid.uuid4())
+    Session.create_session(
+        user['_id'],
+        session_token,
+        remember_me=data.get('remember_me', False)
+    )
+    
+    ActivityLog.log_activity(user['_id'], "user_login")
+    
+    return jsonify({
+        "message": "Login successful",
+        "session_token": session_token,
+        "user": {
+            "id": str(user['_id']),
+            "username": user['username'],
+            "ui_preferences": user['ui_preferences']
+        }
+    }), 200
 
-#reset password
-@routes.route('/password-reset/<token>', methods=['POST'])
-def reset_password(token):
-    data = request.json
-    reset_request = PasswordReset.find_valid_request(reset_token=token)
-    if reset_request:
-        hashed_password = generate_password_hash(data['new_password'])
-        User.update_user(reset_request["user_id"], {"hashed_password": hashed_password})
-        PasswordReset.mark_used(token)
-        return jsonify({"message": "Password reset successfully"}), 200
-    return jsonify({"error": "Invalid or expired token"}), 400
+@routes.route('/2fa/setup', methods=['POST'])
+@token_required
+def setup_2fa():
+    user_id = request.json['user_id']
+    secret = User.setup_2fa(user_id)
+    return jsonify({"secret": secret}), 200
 
-#create content
+@routes.route('/profile/<user_id>', methods=['GET', 'PUT'])
+@token_required
+def manage_profile(user_id):
+    if request.method == 'GET':
+        user = User.collection.find_one({"_id": ObjectId(user_id)})
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        return jsonify({
+            "profile": user['profile'],
+            "privacy_settings": user['privacy_settings']
+        }), 200
+    
+    elif request.method == 'PUT':
+        updates = request.json
+        try:
+            User.collection.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$set": {
+                    "profile": updates.get('profile', {}),
+                    "privacy_settings": updates.get('privacy_settings', {}),
+                    "updated_at": datetime.datetime.utcnow()
+                }}
+            )
+            ActivityLog.log_activity(user_id, "profile_updated")
+            return jsonify({"message": "Profile updated successfully"}), 200
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
 @routes.route('/content', methods=['POST'])
+@token_required
 def create_content():
     data = request.json
-    content = Content.create_content(
-        user_id=data['user_id'],
-        text=data['text'],
-        media_url=data.get('media_url', ''),
-        tags=data.get('tags', []),
-        visibility=data.get('visibility', 'public')
-    )
-    return jsonify({"message": "Content created successfully", "content_id": str(content.inserted_id)}), 201
-
-#ollow or unfollow a user
-@routes.route('/follow', methods=['POST'])
-def follow_user():
-    data = request.json
-    if data['action'] == "follow":
-        Connection.follow_user(data['follower_id'], data['followed_id'])
-        return jsonify({"message": "Followed successfully"}), 201
-    elif data['action'] == "unfollow":
-        Connection.unfollow_user(data['follower_id'], data['followed_id'])
-        return jsonify({"message": "Unfollowed successfully"}), 200
-    return jsonify({"error": "Invalid action"}), 400
-
-#unread notifications
-@routes.route('/notifications/unread/<user_id>', methods=['GET'])
-def get_unread_notifications(user_id):
-    notifications = Notification.get_unread_notifications(user_id)
-    return jsonify({"unread_notifications": notifications}), 200
-
-#notification as read
-@routes.route('/notifications/read/<notification_id>', methods=['POST'])
-def mark_notification_as_read(notification_id):
-    Notification.mark_as_read(notification_id)
-    return jsonify({"message": "Notification marked as read"}), 200
-
-#recent activity logs
-@routes.route('/activity/<user_id>', methods=['GET'])
-def get_activity_logs(user_id):
-    logs = ActivityLog.get_recent_logs(user_id, limit=10)
-    return jsonify({"activity_logs": logs}), 200
+    try:
+        result = Content.create_content(
+            user_id=data['user_id'],
+            text=data['text'],
+            media_url=data.get('media_url', ''),
+            tags=data.get('tags', []),
+            visibility=data.get('visibility', 'public')
+        )
+        ActivityLog.log_activity(data['user_id'], "content_created")
+        return jsonify({"message": "Content created", "content_id": str(result.inserted_id)}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @routes.route('/search', methods=['GET'])
 def search():
-    query = request.args.get('query', '').strip()
-    search_type = request.args.get('type', 'all')  # 'profiles', 'content', or 'all'
-    limit = int(request.args.get('limit', 10))
-    skip = int(request.args.get('skip', 0))
-
-    # Validate input
+    query = request.args.get('query', '')
+    search_type = request.args.get('type', 'all')
+    
     if not query:
-        return jsonify({"success": False, "error": "Search query is required"}), 400
-    if search_type not in ['profiles', 'content', 'all']:
-        return jsonify({"success": False, "error": "Invalid search type"}), 400
-    if limit <= 0 or skip < 0:
-        return jsonify({"success": False, "error": "Limit must be greater than 0 and skip must be non-negative"}), 400
-
-    # Perform search
+        return jsonify({"error": "Search query is required"}), 400
+        
     results = {}
+    if search_type in ['profiles', 'all']:
+        profiles = User.collection.find(
+            {"$text": {"$search": query}},
+            {"score": {"$meta": "textScore"}}
+        ).sort([("score", {"$meta": "textScore"})])
+        results['profiles'] = list(profiles)
+        
+    if search_type in ['content', 'all']:
+        content = Content.collection.find(
+            {
+                "$text": {"$search": query},
+                "visibility": "public"
+            },
+            {"score": {"$meta": "textScore"}}
+        ).sort([("score", {"$meta": "textScore"})])
+        results['content'] = list(content)
+        
+    return jsonify({"results": results}), 200
+
+@routes.route('/notifications', methods=['GET'])
+@token_required
+def get_notifications():
+    user_id = request.args.get('user_id')
+    unread_only = request.args.get('unread_only', 'false').lower() == 'true'
+    
+    query = {"user_id": ObjectId(user_id)}
+    if unread_only:
+        query["is_read"] = False
+        
+    notifications = list(Notification.collection.find(query).sort("created_at", -1))
+    return jsonify({"notifications": notifications}), 200
+
+@routes.route('/ui-preferences/<user_id>', methods=['PUT'])
+@token_required
+def update_ui_preferences(user_id):
+    preferences = request.json
     try:
-        if search_type in ['profiles', 'all']:
-            profiles = User.collection.aggregate([
-                {"$search": {"text": {"query": query, "path": ["username", "profile.full_name", "bio"]}}},
-                {"$project": {"username": 1, "profile": 1, "score": {"$meta": "searchScore"}}},
-                {"$sort": {"score": -1}},
-                {"$skip": skip},
-                {"$limit": limit}
-            ])
-            results["profiles"] = list(profiles)
-
-        if search_type in ['content', 'all']:
-            content = Content.collection.aggregate([
-                {"$search": {"text": {"query": query, "path": ["text", "tags"]}}},
-                {"$project": {"text": 1, "tags": 1, "user_id": 1, "score": {"$meta": "searchScore"}}},
-                {"$sort": {"score": -1}},
-                {"$skip": skip},
-                {"$limit": limit}
-            ])
-            results["content"] = list(content)
-
-        return jsonify({"success": True, "data": results}), 200
-
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-#ui
-@routes.route('/ui-preferences/<user_id>', methods=['GET', 'POST'])
-def manage_ui_preferences(user_id):
-    if request.method == 'GET':
-        preferences = User.collection.find_one({"_id": ObjectId(user_id)}, {"ui_preferences": 1})
-        return jsonify(preferences), 200
-
-    elif request.method == 'POST':
-        updates = request.json
-        User.update_user(user_id, {"ui_preferences": updates})
+        User.collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {
+                "ui_preferences": preferences,
+                "updated_at": datetime.datetime.utcnow()
+            }}
+        )
         return jsonify({"message": "UI preferences updated"}), 200
-
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
