@@ -14,7 +14,7 @@ MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
 client = MongoClient(MONGO_URI)
 db = client["app_database"]
 
-class User:
+class UserModel:
     """Handles user-related MongoDB operations."""
 
     collection = db["users"]
