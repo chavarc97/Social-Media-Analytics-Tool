@@ -1,7 +1,8 @@
 from Dgrah.client import main as clientMain
 from Dgrah import init_dgraph
 from Cassandra import init_db, client as cassandraMain
-from Pymongo import MongoClient
+from pymongo import MongoClient
+from API.menu import main_menu as mongoMain
 import os
 
 D_client, D_client_stub = init_dgraph.run()
@@ -35,7 +36,7 @@ def main():
                 cassandraMain.main()
                 pass
             elif option == 3:
-                print_menu()
+                mongoMain(mongo_db)
                 pass
             elif option == 4:
                 print("Exiting...")
