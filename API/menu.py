@@ -28,8 +28,11 @@ def main_menu():
         if choice == "1":
             add_user_menu()
         elif choice == "2":
-            UserModel.drop_all()
-            print("Database dropped successfully.")
+            try:
+                UserModel.drop_all()
+                print("Database dropped successfully.")
+            except Exception as e:
+                print(f"Failed to drop database: {e}")
         elif choice == "3":
             print("Exiting...")
             break
