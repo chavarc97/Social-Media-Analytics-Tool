@@ -191,3 +191,194 @@ class Connection:
         except Exception as e:
             logger.error(f"Failed to follow user: {str(e)}")
             raise
+
+class Session:
+    """Handles session-related operations."""
+    collection = db["sessions"]
+
+    @staticmethod
+    def create_session(user_id, session_token):
+        """
+        Create a new session for a user.
+
+        Args:
+            user_id (str): The ID of the user.
+            session_token (str): The token for the session.
+
+        Returns:
+            ObjectId: The ID of the created session document.
+        """
+        try:
+            session = {
+                "user_id": ObjectId(user_id),
+                "session_token": session_token,
+                "expires_at": datetime.datetime.utcnow() + datetime.timedelta(days=7),  # 7-day session expiry
+            }
+            result = Session.collection.insert_one(session)
+            logger.info(f"Session created for user: {user_id}")
+            return result.inserted_id
+        except Exception as e:
+            logger.error(f"Failed to create session: {str(e)}")
+            raise
+
+    @staticmethod
+    def find_session(session_token):
+        """
+        Find a session by its token.
+
+        Args:
+            session_token (str): The token of the session.
+
+        Returns:
+            dict: The session document if found.
+        """
+        try:
+            return Session.collection.find_one({"session_token": session_token})
+        except Exception as e:
+            logger.error(f"Failed to find session: {str(e)}")
+            raise
+
+    @staticmethod
+    def delete_expired_sessions():
+        """
+        Delete all expired sessions from the database.
+
+        Returns:
+            int: Number of sessions deleted.
+        """
+        try:
+            result = Session.collection.delete_many({"expires_at": {"$lt": datetime.datetime.utcnow()}})
+            logger.info(f"Deleted {result.deleted_count} expired sessions.")
+            return result.deleted_count
+        except Exception as e:
+            logger.error(f"Failed to delete expired sessions: {str(e)}")
+            raise
+
+
+class ActivityLog:
+    """Handles user activity logs."""
+    collection = db["activity_logs"]
+
+    @staticmethod
+    def log_action(user_id, action, metadata=None):
+        """
+        Log a user's action.
+
+        Args:
+            user_id (str): The ID of the user.
+            action (str): Description of the action.
+            metadata (dict, optional): Additional details about the action.
+
+        Returns:
+            ObjectId: The ID of the created log document.
+        """
+        try:
+            log_entry = {
+                "user_id": ObjectId(user_id),
+                "action": action,
+                "timestamp": datetime.datetime.utcnow(),
+                "metadata": metadata or {},
+            }
+            result = ActivityLog.collection.insert_one(log_entry)
+            logger.info(f"Action logged for user: {user_id}, Action: {action}")
+            return result.inserted_id
+        except Exception as e:
+            logger.error(f"Failed to log action: {str(e)}")
+            raise
+
+    @staticmethod
+    def get_recent_logs(user_id, limit=10):
+        """
+        Retrieve the most recent logs for a user.
+
+        Args:
+            user_id (str): The ID of the user.
+            limit (int): The number of logs to retrieve.
+
+        Returns:
+            list: A list of recent activity logs.
+        """
+        try:
+            logs = list(
+                ActivityLog.collection.find({"user_id": ObjectId(user_id)})
+                .sort("timestamp", -1)
+                .limit(limit)
+            )
+            return logs
+        except Exception as e:
+            logger.error(f"Failed to retrieve recent logs: {str(e)}")
+            raise
+
+
+class Notification:
+    """Handles notifications for users."""
+    collection = db["notifications"]
+
+    @staticmethod
+    def send_notification(user_id, message, action_link):
+        """
+        Send a notification to a user.
+
+        Args:
+            user_id (str): The ID of the user.
+            message (str): The notification message.
+            action_link (str): A link related to the notification.
+
+        Returns:
+            ObjectId: The ID of the created notification document.
+        """
+        try:
+            notification = {
+                "user_id": ObjectId(user_id),
+                "message": message,
+                "action_link": action_link,
+                "created_at": datetime.datetime.utcnow(),
+                "is_read": False,
+            }
+            result = Notification.collection.insert_one(notification)
+            logger.info(f"Notification sent to user: {user_id}")
+            return result.inserted_id
+        except Exception as e:
+            logger.error(f"Failed to send notification: {str(e)}")
+            raise
+
+    @staticmethod
+    def get_unread_notifications(user_id):
+        """
+        Retrieve all unread notifications for a user.
+
+        Args:
+            user_id (str): The ID of the user.
+
+        Returns:
+            list: A list of unread notifications.
+        """
+        try:
+            notifications = list(
+                Notification.collection.find({"user_id": ObjectId(user_id), "is_read": False})
+            )
+            return notifications
+        except Exception as e:
+            logger.error(f"Failed to retrieve unread notifications: {str(e)}")
+            raise
+
+    @staticmethod
+    def mark_as_read(notification_id):
+        """
+        Mark a notification as read.
+
+        Args:
+            notification_id (str): The ID of the notification.
+
+        Returns:
+            int: The number of modified documents.
+        """
+        try:
+            result = Notification.collection.update_one(
+                {"_id": ObjectId(notification_id)}, {"$set": {"is_read": True}}
+            )
+            logger.info(f"Notification marked as read: {notification_id}")
+            return result.modified_count
+        except Exception as e:
+            logger.error(f"Failed to mark notification as read: {str(e)}")
+            raise
