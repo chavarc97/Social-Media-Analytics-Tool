@@ -20,3 +20,4 @@ marshmallow
 pyjwt
 flask-limiter
 gunicorn
+pyotp
