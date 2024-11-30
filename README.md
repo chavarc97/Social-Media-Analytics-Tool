@@ -7,6 +7,12 @@ Start by setting the python virtual env
 Run Mongo
 
 > docker run --name mongodb -d -p 27017:27017 mongo
+Run APIS server:
+Run main file
+> python app.py
+API available in
+http://localhost:5000
+
 
 Run Cassandra
 
